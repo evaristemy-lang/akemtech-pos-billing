@@ -1,0 +1,8 @@
+{
+  "name": "AkemTech POS & Billing",
+  "description": "Enterprise-grade all-in-one POS, Billing & business management platform designed for Cameroonian businesses with universal printer auto-detection (Bluetooth, USB, Network, System) and Akem AI assistant.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
