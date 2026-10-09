@@ -160,7 +160,7 @@ export const Header: React.FC = () => {
           title="Publier ou synchroniser le code sur votre GitHub"
         >
           <Github className="h-3.5 w-3.5 text-teal-400" />
-          <span className="hidden md:inline font-medium">GitHub</span>
+          <span className="font-semibold text-[11px]">GitHub</span>
         </button>
 
         {/* Quick Action Button */}
@@ -212,6 +212,14 @@ export const Header: React.FC = () => {
               >
                 <UserPlus className="h-4 w-4 text-emerald-600" />
                 {t.addCustomer}
+              </button>
+              <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
+              <button
+                onClick={() => setIsGitHubModalOpen(true)}
+                className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-xs font-medium text-slate-900 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/80 dark:text-white"
+              >
+                <Github className="h-4 w-4 text-slate-900 dark:text-teal-400" />
+                <span>{language === 'fr' ? 'Publier sur GitHub' : 'Publish to GitHub'}</span>
               </button>
             </div>
           )}

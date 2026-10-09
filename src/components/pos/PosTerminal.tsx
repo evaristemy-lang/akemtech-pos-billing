@@ -81,6 +81,54 @@ export const PosTerminal: React.FC = () => {
   const [barcodeInput, setBarcodeInput] = useState<string>('');
   const [isCameraScannerOpen, setIsCameraScannerOpen] = useState<boolean>(false);
 
+  // Custom non-catalog item modal state
+  const [isCustomItemModalOpen, setIsCustomItemModalOpen] = useState<boolean>(false);
+  const [customItemName, setCustomItemName] = useState<string>('');
+  const [customItemPrice, setCustomItemPrice] = useState<number>(1000);
+  const [customItemQty, setCustomItemQty] = useState<number>(1);
+
+  const handleAddCustomItem = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!customItemName.trim()) return;
+    const customProd: Product = {
+      id: 'custom-' + Date.now(),
+      name: customItemName.trim(),
+      sku: 'LIBRE-' + Math.floor(100 + Math.random() * 900),
+      barcode: '',
+      category: 'general',
+      brand: 'Standard',
+      costPrice: Math.round(customItemPrice * 0.7),
+      sellingPrice: customItemPrice,
+      wholesalePrice: customItemPrice,
+      stockQuantity: 999,
+      minStock: 0,
+      maxStock: 999,
+      unit: 'Pièce',
+      warehouse: 'Comptoir',
+      branchStocks: {},
+    };
+    playHardwareBeep('beep');
+    setCart(prev => [
+      ...prev,
+      {
+        product: customProd,
+        quantity: Math.max(1, customItemQty),
+        unitPrice: customItemPrice,
+        discount: 0,
+        total: Math.max(1, customItemQty) * customItemPrice,
+      },
+    ]);
+    setIsCustomItemModalOpen(false);
+    setCustomItemName('');
+    setCustomItemPrice(1000);
+    setCustomItemQty(1);
+    addNotification({
+      title: language === 'fr' ? 'Article libre ajouté' : 'Custom item added',
+      message: `${customItemName.trim()} (${formatFCFA(customItemPrice, language)})`,
+      type: 'success',
+    });
+  };
+
   // Global Hardware Barcode Laser Gun Detection (rapid character keystrokes ending in Enter)
   useEffect(() => {
     let keyBuffer = '';
@@ -124,16 +172,15 @@ export const PosTerminal: React.FC = () => {
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
   }, [products]);
 
-  // Filter products by branch, category and query
+  // Filter products by branch, category and query (supports multi-term token matching)
   const filteredProducts = products.filter(prod => {
     const matchesCategory = selectedCategory === 'all' || prod.category === selectedCategory;
     const q = searchQuery.trim().toLowerCase();
-    const matchesQuery =
-      !q ||
-      (prod.name || '').toLowerCase().includes(q) ||
-      (prod.sku || '').toLowerCase().includes(q) ||
-      (prod.barcode || '').toLowerCase().includes(q) ||
-      (prod.brand || '').toLowerCase().includes(q);
+    if (!q) return matchesCategory;
+
+    const terms = q.split(/\s+/).filter(Boolean);
+    const searchable = `${prod.name} ${prod.sku} ${prod.barcode} ${prod.brand || ''} ${prod.category} ${prod.unit}`.toLowerCase();
+    const matchesQuery = terms.every(term => searchable.includes(term));
     return matchesCategory && matchesQuery;
   });
 
@@ -548,7 +595,16 @@ export const PosTerminal: React.FC = () => {
             </h3>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setIsCustomItemModalOpen(true)}
+              className="flex items-center gap-1 rounded-lg bg-teal-50 px-2 py-1 text-[11px] font-bold text-teal-700 hover:bg-teal-100 dark:bg-teal-950/70 dark:text-teal-300 transition"
+              title={language === 'fr' ? 'Ajouter un article ou service non référencé' : 'Add custom item or fee'}
+            >
+              <Plus className="h-3 w-3" />
+              <span>{language === 'fr' ? 'Article Libre' : 'Custom'}</span>
+            </button>
+
             {cart.length > 0 && (
               <>
                 <button
@@ -968,6 +1024,88 @@ export const PosTerminal: React.FC = () => {
           addToCart(prod);
         }}
       />
+
+      {/* Custom Non-Catalog Item Modal */}
+      {isCustomItemModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl dark:bg-slate-900 text-xs">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2 dark:border-slate-800">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                {language === 'fr' ? 'Ajouter un Article Libre' : 'Add Custom Item'}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsCustomItemModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleAddCustomItem} className="mt-3.5 space-y-3">
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300">
+                  {language === 'fr' ? 'Désignation de l’article / Prestation' : 'Item Description'}
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder={language === 'fr' ? 'Ex: Produit spécifique client...' : 'Ex: Special item...'}
+                  value={customItemName}
+                  onChange={e => setCustomItemName(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-2.5 font-bold outline-none dark:border-slate-800 dark:bg-slate-800 dark:text-white"
+                  autoFocus
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300">
+                    {language === 'fr' ? 'Prix Unitaire (FCFA)' : 'Unit Price (FCFA)'}
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    required
+                    value={customItemPrice}
+                    onChange={e => setCustomItemPrice(Number(e.target.value) || 0)}
+                    className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-2.5 font-bold outline-none dark:border-slate-800 dark:bg-slate-800 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300">
+                    {language === 'fr' ? 'Quantité' : 'Quantity'}
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    required
+                    value={customItemQty}
+                    onChange={e => setCustomItemQty(Number(e.target.value) || 1)}
+                    className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-2.5 font-bold outline-none dark:border-slate-800 dark:bg-slate-800 dark:text-white"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsCustomItemModalOpen(false)}
+                  className="flex-1 rounded-xl border border-slate-200 py-2.5 font-bold text-slate-700 dark:border-slate-800 dark:text-slate-300"
+                >
+                  {t.cancel}
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 rounded-xl bg-teal-600 py-2.5 font-bold text-white shadow-md hover:bg-teal-700"
+                >
+                  {language === 'fr' ? 'Ajouter au Panier' : 'Add to Cart'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

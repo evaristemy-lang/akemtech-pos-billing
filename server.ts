@@ -89,6 +89,130 @@ app.post('/api/printer/raw-send', async (req, res) => {
   }
 });
 
+// Export codebase archive as tar.gz
+app.get('/api/export/archive', async (req, res) => {
+  try {
+    const { exec } = await import('child_process');
+    const archivePath = '/tmp/akemtech-pos-billing.tar.gz';
+    exec('git archive -o /tmp/akemtech-pos-billing.tar.gz HEAD', (error) => {
+      if (error) {
+        return res.status(500).json({ error: 'Failed to generate archive', message: error.message });
+      }
+      res.download(archivePath, 'akemtech-pos-billing-v2.tar.gz');
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Export failed', message: err?.message });
+  }
+});
+
+// GitHub direct publisher endpoint
+app.post('/api/github/push', async (req, res) => {
+  const { githubUsername, repoName, token, isPrivate = false } = req.body;
+  if (!githubUsername || !repoName) {
+    return res.status(400).json({ error: 'GitHub username and repo name are required' });
+  }
+
+  const cleanUser = String(githubUsername).trim();
+  const cleanRepo = String(repoName).trim();
+  const cleanToken = token ? String(token).trim() : null;
+  const repoUrl = `https://github.com/${cleanUser}/${cleanRepo}`;
+
+  if (!cleanToken) {
+    return res.status(400).json({
+      error: 'Token missing',
+      message: 'Provide a GitHub Personal Access Token to publish automatically, or run the git commands manually.',
+      repoUrl,
+    });
+  }
+
+  try {
+    // 1. Verify token & permissions on GitHub API
+    const userRes = await fetch('https://api.github.com/user', {
+      headers: {
+        Authorization: `Bearer ${cleanToken}`,
+        Accept: 'application/vnd.github.v3+json',
+        'User-Agent': 'AkemTech-POS-Sync',
+      },
+    });
+
+    if (!userRes.ok) {
+      return res.status(401).json({
+        error: 'Invalid GitHub token',
+        message: 'GitHub rejected the token. Ensure it has repo scope.',
+      });
+    }
+
+    // 2. Check if repo already exists, or create it
+    const checkRepoRes = await fetch(`https://api.github.com/repos/${cleanUser}/${cleanRepo}`, {
+      headers: {
+        Authorization: `Bearer ${cleanToken}`,
+        Accept: 'application/vnd.github.v3+json',
+        'User-Agent': 'AkemTech-POS-Sync',
+      },
+    });
+
+    if (checkRepoRes.status === 404) {
+      // Create repository on GitHub
+      const createRes = await fetch('https://api.github.com/user/repos', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${cleanToken}`,
+          Accept: 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
+          'User-Agent': 'AkemTech-POS-Sync',
+        },
+        body: JSON.stringify({
+          name: cleanRepo,
+          description: 'AkemTech POS & Billing - Enterprise POS & Multi-Branch Business Suite for Cameroon',
+          private: !!isPrivate,
+          has_issues: true,
+          has_projects: true,
+          has_wiki: false,
+        }),
+      });
+
+      if (!createRes.ok) {
+        const errorData = await createRes.json();
+        return res.status(500).json({
+          error: 'Failed to create repository on GitHub',
+          details: errorData,
+        });
+      }
+    }
+
+    // 3. Push code to GitHub repository
+    const { exec } = await import('child_process');
+    const authRemoteUrl = `https://x-access-token:${cleanToken}@github.com/${cleanUser}/${cleanRepo}.git`;
+
+    exec(
+      `git remote remove origin 2>/dev/null || true; git remote add origin "${authRemoteUrl}" && git branch -M main && git push -u origin main --force`,
+      (pushErr, stdout, stderr) => {
+        // Clean remote url after push to remove token from local config
+        exec(`git remote set-url origin "${repoUrl}.git" 2>/dev/null || true`);
+
+        if (pushErr) {
+          console.error('Git push error:', pushErr, stderr);
+          return res.status(500).json({
+            error: 'Git push failed',
+            message: stderr || pushErr.message,
+            repoUrl,
+          });
+        }
+
+        return res.json({
+          success: true,
+          repoUrl,
+          publishedAt: new Date().toISOString(),
+          message: 'Code successfully pushed to GitHub repository!',
+        });
+      }
+    );
+  } catch (err: any) {
+    console.error('GitHub publish error:', err);
+    res.status(500).json({ error: 'Publish failed', message: err?.message });
+  }
+});
+
 // AI Chatbot endpoint for "Akem AI"
 app.post('/api/ai/chat', async (req, res) => {
   try {

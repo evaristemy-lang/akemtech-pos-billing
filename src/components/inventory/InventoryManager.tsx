@@ -167,13 +167,43 @@ export const InventoryManager: React.FC = () => {
           </p>
         </div>
 
-        <button
-          onClick={() => setIsAddModalOpen(true)}
-          className="flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-teal-700 transition"
-        >
-          <Plus className="h-4 w-4" />
-          <span>{t.addProduct}</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => {
+              if (products.length > 0) {
+                const prod = selectedProduct || products[0];
+                setSelectedProduct(prod);
+                setAdjustQty(prod.stockQuantity);
+                setIsAdjustModalOpen(true);
+              }
+            }}
+            className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-200 shadow-xs transition"
+          >
+            <span>{t.adjustStock}</span>
+          </button>
+
+          <button
+            onClick={() => {
+              if (products.length > 0) {
+                const prod = selectedProduct || products[0];
+                setSelectedProduct(prod);
+                setIsTransferModalOpen(true);
+              }
+            }}
+            className="flex items-center gap-1.5 rounded-xl border border-teal-200 bg-teal-50 px-3.5 py-2 text-xs font-bold text-teal-700 hover:bg-teal-100 dark:border-teal-900/60 dark:bg-teal-950/40 dark:text-teal-300 shadow-xs transition"
+          >
+            <ArrowRightLeft className="h-3.5 w-3.5" />
+            <span>{t.transferStock}</span>
+          </button>
+
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            className="flex items-center gap-1.5 rounded-xl bg-teal-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-teal-700 transition"
+          >
+            <Plus className="h-4 w-4" />
+            <span>{t.addProduct}</span>
+          </button>
+        </div>
       </div>
 
       {/* KPI Highlights */}
@@ -475,9 +505,32 @@ export const InventoryManager: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
           <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl dark:bg-slate-900 text-xs">
             <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t.adjustStock}</h3>
-            <p className="text-slate-500 mt-0.5">{selectedProduct.name}</p>
+            <p className="text-slate-500 mt-0.5">{language === 'fr' ? 'Modifier l’inventaire physique d’un article' : 'Adjust physical inventory'}</p>
 
             <div className="mt-4 space-y-3">
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300">
+                  {language === 'fr' ? 'Sélectionner l’Article' : 'Select Product'}
+                </label>
+                <select
+                  value={selectedProduct.id}
+                  onChange={e => {
+                    const prod = products.find(p => p.id === e.target.value);
+                    if (prod) {
+                      setSelectedProduct(prod);
+                      setAdjustQty(prod.stockQuantity);
+                    }
+                  }}
+                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-2.5 font-bold text-slate-900 outline-none dark:border-slate-800 dark:bg-slate-800 dark:text-white"
+                >
+                  {products.map(p => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} ({p.sku}) — Stock: {p.stockQuantity} {p.unit}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <div>
                 <label className="font-bold text-slate-700 dark:text-slate-300">{language === 'fr' ? 'Nouvelle Quantité en Stock' : 'New Quantity'}</label>
                 <input
@@ -528,9 +581,29 @@ export const InventoryManager: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
           <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl dark:bg-slate-900 text-xs">
             <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t.transferStock}</h3>
-            <p className="text-slate-500 mt-0.5">{selectedProduct.name}</p>
+            <p className="text-slate-500 mt-0.5">{language === 'fr' ? 'Transfert de marchandise entre agences' : 'Inter-branch stock transfer'}</p>
 
             <div className="mt-4 space-y-3">
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300">
+                  {language === 'fr' ? 'Article à Transférer' : 'Product to Transfer'}
+                </label>
+                <select
+                  value={selectedProduct.id}
+                  onChange={e => {
+                    const prod = products.find(p => p.id === e.target.value);
+                    if (prod) setSelectedProduct(prod);
+                  }}
+                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-2.5 font-bold text-slate-900 outline-none dark:border-slate-800 dark:bg-slate-800 dark:text-white"
+                >
+                  {products.map(p => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} ({p.sku}) — Stock Global: {p.stockQuantity} {p.unit}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <div>
                 <label className="font-bold text-slate-700 dark:text-slate-300">{language === 'fr' ? 'Agence Source (Départ)' : 'Source Branch'}</label>
                 <select

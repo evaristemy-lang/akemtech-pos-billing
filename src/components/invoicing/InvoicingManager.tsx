@@ -471,18 +471,20 @@ export const InvoicingManager: React.FC = () => {
                               if (prod) {
                                 handleUpdateItem(item.id, {
                                   productId: prod.id,
-                                  description: prod.name,
+                                  description: `${prod.name}${prod.brand ? ' - ' + prod.brand : ''}`,
                                   unitPrice: prod.sellingPrice,
                                 });
                               }
+                            } else {
+                              handleUpdateItem(item.id, { productId: undefined });
                             }
                           }}
-                          className="w-32 sm:w-40 rounded-lg border border-slate-200 bg-white p-1.5 text-[11px] font-medium outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                          className="w-36 sm:w-48 rounded-lg border border-slate-200 bg-white p-1.5 text-[11px] font-medium outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                         >
-                          <option value="">{language === 'fr' ? '(Article personnalisé)' : '(Custom Item)'}</option>
+                          <option value="">{language === 'fr' ? '✎ Article libre' : '✎ Custom item'}</option>
                           {products.map(p => (
                             <option key={p.id} value={p.id}>
-                              {p.name}
+                              {p.name} ({p.stockQuantity} {p.unit.split(' ')[0]})
                             </option>
                           ))}
                         </select>
