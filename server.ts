@@ -142,8 +142,12 @@ app.post('/api/github/push', async (req, res) => {
       });
     }
 
+    const userData = await userRes.json();
+    const realUsername = userData.login || cleanUser;
+    const finalRepoUrl = `https://github.com/${realUsername}/${cleanRepo}`;
+
     // 2. Check if repo already exists, or create it
-    const checkRepoRes = await fetch(`https://api.github.com/repos/${cleanUser}/${cleanRepo}`, {
+    const checkRepoRes = await fetch(`https://api.github.com/repos/${realUsername}/${cleanRepo}`, {
       headers: {
         Authorization: `Bearer ${cleanToken}`,
         Accept: 'application/vnd.github.v3+json',
@@ -173,35 +177,38 @@ app.post('/api/github/push', async (req, res) => {
 
       if (!createRes.ok) {
         const errorData = await createRes.json();
-        return res.status(500).json({
-          error: 'Failed to create repository on GitHub',
-          details: errorData,
-        });
+        // If it failed because name already exists, we can still push to it
+        if (!errorData?.message?.includes('already exists')) {
+          return res.status(500).json({
+            error: 'Failed to create repository on GitHub',
+            details: errorData,
+          });
+        }
       }
     }
 
     // 3. Push code to GitHub repository
     const { exec } = await import('child_process');
-    const authRemoteUrl = `https://x-access-token:${cleanToken}@github.com/${cleanUser}/${cleanRepo}.git`;
+    const authRemoteUrl = `https://x-access-token:${cleanToken}@github.com/${realUsername}/${cleanRepo}.git`;
 
     exec(
       `git remote remove origin 2>/dev/null || true; git remote add origin "${authRemoteUrl}" && git branch -M main && git push -u origin main --force`,
       (pushErr, stdout, stderr) => {
         // Clean remote url after push to remove token from local config
-        exec(`git remote set-url origin "${repoUrl}.git" 2>/dev/null || true`);
+        exec(`git remote set-url origin "${finalRepoUrl}.git" 2>/dev/null || true`);
 
         if (pushErr) {
           console.error('Git push error:', pushErr, stderr);
           return res.status(500).json({
             error: 'Git push failed',
             message: stderr || pushErr.message,
-            repoUrl,
+            repoUrl: finalRepoUrl,
           });
         }
 
         return res.json({
           success: true,
-          repoUrl,
+          repoUrl: finalRepoUrl,
           publishedAt: new Date().toISOString(),
           message: 'Code successfully pushed to GitHub repository!',
         });

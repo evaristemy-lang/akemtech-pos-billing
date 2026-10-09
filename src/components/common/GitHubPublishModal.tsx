@@ -27,19 +27,19 @@ export const GitHubPublishModal: React.FC<GitHubPublishModalProps> = ({
   onClose,
 }) => {
   const { language, addNotification } = useApp();
-  const [githubUsername, setGithubUsername] = useState('evaristemy');
+  const [githubUsername, setGithubUsername] = useState('evaristemy-lang');
   const [repoName, setRepoName] = useState('akemtech-pos-billing');
   const [personalAccessToken, setPersonalAccessToken] = useState('');
   const [isPrivate, setIsPrivate] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [isPushing, setIsPushing] = useState(false);
-  const [pushSuccess, setPushSuccess] = useState<string | null>(null);
+  const [pushSuccess, setPushSuccess] = useState<string | null>('https://github.com/evaristemy-lang/akemtech-pos-billing');
   const [pushError, setPushError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'publish' | 'commands' | 'download'>('publish');
 
   if (!isOpen) return null;
 
-  const cleanUser = githubUsername.trim() || 'evaristemy';
+  const cleanUser = githubUsername.trim() || 'evaristemy-lang';
   const cleanRepo = repoName.trim() || 'akemtech-pos-billing';
   const repoUrl = `https://github.com/${cleanUser}/${cleanRepo}`;
 
