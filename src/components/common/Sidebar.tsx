@@ -22,6 +22,7 @@ import {
   ShieldCheck,
   CreditCard,
   Printer,
+  Smartphone,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { translations } from '../../utils/translations';
@@ -51,6 +52,7 @@ export const Sidebar: React.FC = () => {
     theme,
     printerConfig,
     setIsPrinterModalOpen,
+    setIsAndroidModalOpen,
   } = useApp();
 
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -214,6 +216,20 @@ export const Sidebar: React.FC = () => {
         <div className="border-t border-slate-200 p-3 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400 space-y-2">
           <button
             type="button"
+            onClick={() => setIsAndroidModalOpen(true)}
+            className="w-full flex items-center justify-between rounded-xl bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1.5 text-[11px] font-bold text-emerald-800 transition dark:bg-emerald-950/60 dark:text-emerald-300 dark:hover:bg-emerald-900/60 border border-emerald-200/60 dark:border-emerald-800"
+          >
+            <div className="flex items-center gap-1.5">
+              <Smartphone className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span>Application Android</span>
+            </div>
+            <span className="font-mono text-[9px] uppercase px-1.5 py-0.5 rounded bg-emerald-200/60 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-200 font-black">
+              APK
+            </span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => setIsPrinterModalOpen(true)}
             className="w-full flex items-center justify-between rounded-xl bg-slate-100 hover:bg-teal-50 px-2.5 py-1.5 text-[11px] font-bold text-slate-700 hover:text-teal-800 transition dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
           >
@@ -233,7 +249,15 @@ export const Sidebar: React.FC = () => {
           <p className="text-[10px] text-slate-400 mt-0.5">XAF / FCFA • CEMAC Zone</p>
         </div>
       ) : (
-        <div className="border-t border-slate-200 p-2 flex justify-center dark:border-slate-800">
+        <div className="border-t border-slate-200 p-2 flex flex-col items-center gap-1.5 dark:border-slate-800">
+          <button
+            type="button"
+            onClick={() => setIsAndroidModalOpen(true)}
+            className="p-2 rounded-xl text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950"
+            title="Application Android (APK)"
+          >
+            <Smartphone className="h-4 w-4" />
+          </button>
           <button
             type="button"
             onClick={() => setIsPrinterModalOpen(true)}

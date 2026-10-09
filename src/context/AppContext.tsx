@@ -86,6 +86,10 @@ interface AppContextType {
   setIsPrinterModalOpen: (open: boolean) => void;
   isCustomerDisplayOpen: boolean;
   setIsCustomerDisplayOpen: (open: boolean) => void;
+  isAndroidModalOpen: boolean;
+  setIsAndroidModalOpen: (open: boolean) => void;
+  isGitHubModalOpen: boolean;
+  setIsGitHubModalOpen: (open: boolean) => void;
   lastScannedBarcode: string | null;
   setLastScannedBarcode: (barcode: string | null) => void;
   printJob: (params: { sale?: Sale; invoice?: Invoice }) => Promise<boolean>;
@@ -197,6 +201,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   );
   const [isPrinterModalOpen, setIsPrinterModalOpen] = useState(false);
   const [isCustomerDisplayOpen, setIsCustomerDisplayOpen] = useState(false);
+  const [isAndroidModalOpen, setIsAndroidModalOpen] = useState(false);
+  const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false);
   const [lastScannedBarcode, setLastScannedBarcode] = useState<string | null>(null);
 
   const updatePrinterConfig = (updates: Partial<PrinterConfig>) => {
@@ -951,6 +957,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setIsPrinterModalOpen,
         isCustomerDisplayOpen,
         setIsCustomerDisplayOpen,
+        isAndroidModalOpen,
+        setIsAndroidModalOpen,
+        isGitHubModalOpen,
+        setIsGitHubModalOpen,
         lastScannedBarcode,
         setLastScannedBarcode,
         printJob,

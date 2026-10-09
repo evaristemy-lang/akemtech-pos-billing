@@ -20,11 +20,13 @@ import {
   UserPlus,
   Printer,
   Github,
+  Smartphone,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { translations } from '../../utils/translations';
 import { formatDateTime } from '../../utils/formatters';
 import { GitHubPublishModal } from './GitHubPublishModal';
+import { AndroidApkModal } from './AndroidApkModal';
 
 export const Header: React.FC = () => {
   const {
@@ -44,16 +46,18 @@ export const Header: React.FC = () => {
     markNotificationRead,
     markAllNotificationsRead,
     setActiveTab,
-    setShowOnboarding,
     printerConfig,
     setIsPrinterModalOpen,
+    isGitHubModalOpen,
+    setIsGitHubModalOpen,
+    isAndroidModalOpen,
+    setIsAndroidModalOpen,
   } = useApp();
 
   const t = translations[language];
   const [showNotifications, setShowNotifications] = useState(false);
   const [showQuickAction, setShowQuickAction] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -161,6 +165,16 @@ export const Header: React.FC = () => {
         >
           <Github className="h-3.5 w-3.5 text-teal-400" />
           <span className="font-semibold text-[11px]">GitHub</span>
+        </button>
+
+        {/* Android APK Download & WebAPK Install Button */}
+        <button
+          onClick={() => setIsAndroidModalOpen(true)}
+          className="flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 transition dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 shadow-xs"
+          title="Installer sur Android ou télécharger l'APK"
+        >
+          <Smartphone className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+          <span className="font-semibold text-[11px]">Android APK</span>
         </button>
 
         {/* Quick Action Button */}
@@ -354,6 +368,12 @@ export const Header: React.FC = () => {
       <GitHubPublishModal
         isOpen={isGitHubModalOpen}
         onClose={() => setIsGitHubModalOpen(false)}
+      />
+
+      {/* Android APK Download / Install Modal */}
+      <AndroidApkModal
+        isOpen={isAndroidModalOpen}
+        onClose={() => setIsAndroidModalOpen(false)}
       />
     </header>
   );
